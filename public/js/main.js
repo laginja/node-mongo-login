@@ -1,7 +1,11 @@
 let objectToDraw = null;
 let markerClick = false;
 let parkingMarkers = [];    // Array to store parkingMarkers
+let parkingMarkerLines = [];
 
+/**
+ * Make all groups visible/hidden
+ */
 const toggleVisibility = () => {
     group.setVisibility(group.getVisibility() ? false : true);
 }
@@ -10,8 +14,12 @@ document.getElementById("parking").addEventListener("click", () => setObjectToDr
 document.getElementById("traffic-light").addEventListener("click", () => setObjectToDraw("T"));
 document.getElementById("visibility").addEventListener("click", toggleVisibility);
 
-const setObjectToDraw = (objectString) => {
-    objectToDraw = objectString;
+/**
+ * Sets the marker to place on the map
+ * @param {String} obj 
+ */
+const setObjectToDraw = (obj) => {
+    objectToDraw = obj;
     resetParkingMarkers();
 }
 
@@ -32,17 +40,20 @@ const moveMapToZagreb = map => {
  */
 const dropMarker = (coordinate, smartObject) => {
     // Define a variable holding SVG mark-up that defines an icon image:
-    var svgMarkup = '<svg width="24" height="24" ' +
+    let svgMarkup = '<svg width="24" height="24" ' +
         'xmlns="http://www.w3.org/2000/svg">' +
-        '<rect stroke="white" fill="#1b468d" x="1" y="1" width="22" ' +
+        '<rect stroke="white" fill="#1b468d" x="1" y="1"  width="22" ' +
         'height="22" /><text x="12" y="18" font-size="12pt" ' +
         'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
         'fill="white">' + smartObject + '</text></svg>';
 
-    var icon = new H.map.Icon(svgMarkup);
-    var marker = new H.map.Marker(coordinate, { icon: icon });
+    let icon = new H.map.Icon(svgMarkup);
+    let marker = new H.map.Marker(coordinate, { icon: icon });
     marker.draggable = true;
 
+    marker.addEventListener('longpress', (evt) => {
+        group.removeObject(evt.target);
+    });
     // add custom data to the marker
     marker.setData(smartObject);
     group.addObject(marker);
@@ -54,12 +65,12 @@ const dropMarker = (coordinate, smartObject) => {
  * @param {Object} coordinate 
  */
 const dropParkingMarker = (coordinate) => {
+    let icon = createParkingMarkerIcon();
     let svgCircle = '<svg width="20" height="20" version="1.1" xmlns="http://www.w3.org/2000/svg">' +
-        '<circle cx="10" cy="10" r="4" fill="#990000" stroke="black" stroke-width="1"/>' +
+        '<circle cx="10" cy="10" r="4" fill="transparent" stroke="red" stroke-width="3"/>' +
         '</svg>';
-
-    var icon = new H.map.Icon(svgCircle);
-    var marker = new H.map.Marker(coordinate, { icon: icon });
+    let icon2 = new H.map.Icon(svgCircle)
+    let marker = new H.map.DomMarker(coordinate, { icon: icon });
     parkingMarkers.push(marker);
     // Ensure that the marker can receive drag events
     marker.draggable = true;
@@ -76,12 +87,63 @@ const dropParkingMarker = (coordinate) => {
 
     if (parkingMarkers.length > 1) {
         // Draw a line between markers
-        //drawMarkerLine();
+        drawParkingMarkerLine();
     }
     // add custom data to the marker
     //marker.setData(smartObject);
     parkingMarkersGroup.addObject(marker);
     enableMarkerDrag();
+}
+
+const createParkingMarkerIcon = () => {
+    // Create a <div> that will represent the marker
+    let outerElement = document.createElement('div'),
+        innerElement = document.createElement('div');
+
+    outerElement.style.userSelect = 'none';
+    outerElement.style.webkitUserSelect = 'none';
+    outerElement.style.msUserSelect = 'none';
+    outerElement.style.mozUserSelect = 'none';
+    outerElement.style.cursor = 'default';
+
+    innerElement.style.borderRadius = '50%';
+    innerElement.style.background = 'blue';
+    innerElement.style.border = '2px solid black';
+    innerElement.style.width = '10px';
+    innerElement.style.height = '10px';
+
+    // add negative margin to inner element
+    // to move the anchor to center of the div
+    innerElement.style.marginTop = '-5px';
+    innerElement.style.marginLeft = '-5px';
+
+    outerElement.appendChild(innerElement);
+
+    function changeOpacity(evt) {
+        evt.target.style.opacity = 0.6;
+    };
+
+    function changeOpacityToOne(evt) {
+        evt.target.style.opacity = 1;
+    };
+
+    //create dom icon and add/remove opacity listeners
+    let domIcon = new H.map.DomIcon(outerElement, {
+        // the function is called every time marker enters the viewport
+        onAttach: function (clonedElement, domIcon, domMarker) {
+            console.log("entered")
+            clonedElement.addEventListener('mouseover', changeOpacity);
+            clonedElement.addEventListener('mouseout', changeOpacityToOne);
+        },
+        // the function is called every time marker leaves the viewport
+        onDetach: function (clonedElement, domIcon, domMarker) {
+            console.log("left")
+            clonedElement.removeEventListener('mouseover', changeOpacity);
+            clonedElement.removeEventListener('mouseout', changeOpacityToOne);
+        }
+    });
+
+    return domIcon;
 }
 
 
@@ -90,10 +152,10 @@ const enableMarkerDrag = () => {
     // and calculate the offset between mouse and target's position
     // when starting to drag a marker object:
     map.addEventListener('dragstart', function (ev) {
-        var target = ev.target,
+        let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.Marker) {
-            var targetPosition = map.geoToScreen(target.getGeometry());
+            let targetPosition = map.geoToScreen(target.getGeometry());
             target['offset'] = new H.math.Point(pointer.viewportX - targetPosition.x, pointer.viewportY - targetPosition.y);
             behavior.disable();
         }
@@ -103,7 +165,7 @@ const enableMarkerDrag = () => {
     // re-enable the default draggability of the underlying map
     // when dragging has completed
     map.addEventListener('dragend', function (ev) {
-        var target = ev.target;
+        let target = ev.target;
         if (target instanceof H.map.Marker) {
             behavior.enable();
         }
@@ -112,7 +174,7 @@ const enableMarkerDrag = () => {
     // Listen to the drag event and move the position of the marker
     // as necessary
     map.addEventListener('drag', function (ev) {
-        var target = ev.target,
+        let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.Marker) {
             target.setGeometry(map.screenToGeo(pointer.viewportX - target['offset'].x, pointer.viewportY - target['offset'].y));
@@ -120,15 +182,15 @@ const enableMarkerDrag = () => {
     }, false);
 }
 
-const drawMarkerLine = () => {
-    var lineString = new H.geo.LineString();
+const drawParkingMarkerLine = () => {
+    let lineString = new H.geo.LineString();
 
-    lineString.pushPoint({ lat: parkingMarkers[parkingMarkers.length - 2].getGeometry().lat, lng: parkingMarkers[parkingMarkers.length - 2].getGeometry().lng });
-    lineString.pushPoint({ lat: parkingMarkers[parkingMarkers.length - 1].getGeometry().lat, lng: parkingMarkers[parkingMarkers.length - 1].getGeometry().lng });
+    lineString.pushPoint({ lat: parkingMarkers[parkingMarkers.length - 2].b.lat, lng: parkingMarkers[parkingMarkers.length - 2].b.lng });
+    lineString.pushPoint({ lat: parkingMarkers[parkingMarkers.length - 1].b.lat, lng: parkingMarkers[parkingMarkers.length - 1].b.lng });
 
-    group.addObject(new H.map.Polyline(
-        lineString, { style: { lineWidth: 4 } }
-    ));
+    const line = new H.map.Polyline(lineString, { style: { strokeColor: 'rgba(114, 38, 51, 1)', lineWidth: 2 } });
+    parkingMarkerLines = [...parkingMarkerLines, line]
+    map.addObjects(parkingMarkerLines);
 }
 
 /**
@@ -139,9 +201,8 @@ const drawParking = (edges) => {
     let parkingEdges = [];
     edges.forEach(edge => {
         // Get coordinates of each marker
-        let edgeCoordinates = edge.getGeometry();
-        parkingEdges.push(edgeCoordinates.lat);
-        parkingEdges.push(edgeCoordinates.lng);
+        parkingEdges.push(edge.b.lat);
+        parkingEdges.push(edge.b.lng);
         parkingEdges.push(0);
     });
     let style = {
@@ -165,7 +226,7 @@ const drawParking = (edges) => {
 
     // create markers for each polygon's vertice which will be used for dragging
     parking.getGeometry().getExterior().eachLatLngAlt(function (lat, lng, alt, index) {
-        var vertice = new H.map.Marker(
+        let vertice = new H.map.Marker(
             { lat, lng },
             {
                 icon: new H.map.Icon(svgCircle, { anchor: { x: 10, y: 10 } })
@@ -177,17 +238,19 @@ const drawParking = (edges) => {
     });
 
     // add group with parking and it's vertices (markers) on the map
-    map.addObject(parkingGroup);
+    group.addObject(parkingGroup);
 
     // add 'longpress' event listener, remove parking from the map
     parkingGroup.addEventListener('longpress', function (evt) {
-        parkingGroup.removeObject(evt.target);
 
-        var timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
+        group.removeObject(parkingGroup);
+
+        console.log(parkingGroup)
+        let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
         // hide vertice markers
         polygonTimeout = setTimeout(function () {
-            verticeGroup.setVisibility(false);
+            verticeGroup.setVisibility(true);
         }, timeout);
     }, false);
 
@@ -205,7 +268,7 @@ const drawParking = (edges) => {
     // event listener for main group to hide vertice markers if moved out with mouse (or released finger on touch devices)
     // the vertice markers are hidden on touch devices after specific timeout
     parkingGroup.addEventListener('pointerleave', function (evt) {
-        var timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
+        let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
         // hide vertice markers
         polygonTimeout = setTimeout(function () {
@@ -225,7 +288,7 @@ const drawParking = (edges) => {
 
     // event listener for vertice markers group to resize the geo polygon object if dragging over markers
     verticeGroup.addEventListener('drag', function (evt) {
-        var pointer = evt.currentPointer,
+        let pointer = evt.currentPointer,
             geoLineString = parking.getGeometry().getExterior(),
             geoPoint = map.screenToGeo(pointer.viewportX, pointer.viewportY);
 
@@ -240,111 +303,21 @@ const drawParking = (edges) => {
         // stop propagating the drag event, so the map doesn't move
         evt.stopPropagation();
     }, true);
-    /* var style = {
-        fillColor: 'rgba(35, 51, 129, 0.3)',
-        lineWidth: 2,
-        strokeColor: 'rgba(114, 38, 51, 1)'
-    };
-    var svgCircle = '';
-
-    let parkingEdges = [];
-    edges.forEach(edge => {
-        // Get coordinates of each marker
-        let edgeCoordinates = edge.getGeometry();
-        parkingEdges.push(edgeCoordinates.lat);
-        parkingEdges.push(edgeCoordinates.lng);
-        parkingEdges.push(0);
-    });
-    // Create a polygon map object
-    var parking = new H.map.Polygon(new H.geo.LineString(parkingEdges), { style: style });
-
-    let verticeGroup = new H.map.Group({
-        visibility: false
-    })
-    let mainGroup = new H.map.Group({
-            volatility: true, // mark the group as volatile for smooth dragging of all it's objects
-            objects: [parking, verticeGroup]
-        });
-    let polygonTimeout;
-
-    // ensure that the parking can receive drag events
-    parking.draggable = true;
-
-    // create markers for each parking's vertice which will be used for dragging
-    parking.getGeometry().getExterior().eachLatLngAlt(function (lat, lng, alt, index) {
-        var vertice = new H.map.Marker(
-            { lat, lng },
-            {
-                icon: new H.map.Icon(svgCircle, { anchor: { x: 10, y: 10 } })
-            }
-        );
-        vertice.draggable = true;
-        vertice.setData({ 'verticeIndex': index })
-        verticeGroup.addObject(vertice);
-    });
-
-    // add group with parking and it's vertices (markers) on the map
-    group.addObject(mainGroup);
-
-    // event listener for main group to show markers if moved in with mouse (or touched on touch devices)
-    mainGroup.addEventListener('pointerenter', function (evt) {
-        if (polygonTimeout) {
-            clearTimeout(polygonTimeout);
-            polygonTimeout = null;
-        }
-
-        // show vertice markers
-        verticeGroup.setVisibility(true);
-    }, true);
-
-    // event listener for main group to hide vertice markers if moved out with mouse (or released finger on touch devices)
-    // the vertice markers are hidden on touch devices after specific timeout
-    mainGroup.addEventListener('pointerleave', function (evt) {
-        var timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
-
-        // hide vertice markers
-        polygonTimeout = setTimeout(function () {
-            verticeGroup.setVisibility(false);
-        }, timeout);
-    }, true);
-
-    // event listener for vertice markers group to change the cursor to pointer
-    verticeGroup.addEventListener('pointerenter', function (evt) {
-        document.body.style.cursor = 'pointer';
-    }, true);
-
-    // event listener for vertice markers group to change the cursor to default
-    verticeGroup.addEventListener('pointerleave', function (evt) {
-        document.body.style.cursor = 'default';
-    }, true);
-
-    // event listener for vertice markers group to resize the geo polygon object if dragging over markers
-    verticeGroup.addEventListener('drag', function (evt) {
-        var pointer = evt.currentPointer,
-            geoLineString = parking.getGeometry().getExterior(),
-            geoPoint = map.screenToGeo(pointer.viewportX, pointer.viewportY);
-
-        // set new position for vertice marker
-        evt.target.setGeometry(geoPoint);
-
-        // set new position for parking's vertice
-        geoLineString.removePoint(evt.target.getData()['verticeIndex']);
-        geoLineString.insertPoint(evt.target.getData()['verticeIndex'], geoPoint);
-        parking.setGeometry(new H.geo.Polygon(geoLineString));
-
-        // stop propagating the drag event, so the map doesn't move
-        evt.stopPropagation();
-    }, true); */
 
     // Remove parking markers from the map
     resetParkingMarkers();
 }
 
 /**
- * Removes parkingMarkers from the group and resets parkingMarkers
+ * Removes parkingMarkers and parkingMarkerLines from the group and resets parkingMarkers
  */
 const resetParkingMarkers = () => {
+    // remove objects from the map
+    map.removeObjects(parkingMarkerLines);
     parkingMarkersGroup.removeAll();
+
+    // reset helper arrays
+    parkingMarkerLines = [];
     parkingMarkers = [];
 }
 
@@ -372,9 +345,9 @@ window.addEventListener('resize', () => map.getViewPort().resize());
 
 // Add event listeners:
 map.addEventListener('tap', evt => {
-    var target = evt.target;
+    let target = evt.target;
     // Log 'tap' and 'mouse' events:
-    var coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
+    let coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
     console.log(objectToDraw)
 
     // Check we're not clicking on a marker object and we are not drawing a parking
@@ -382,8 +355,8 @@ map.addEventListener('tap', evt => {
         dropMarker(coord, objectToDraw);
     }
 
-    // Check we're not clicking on a marker object and we are drawing a parking
-    if (!(target instanceof H.map.Marker) && objectToDraw === 'P') {
+    // Check we're not clicking on a dommarker object and we are drawing a parking
+    if (!(target instanceof H.map.DomMarker || target instanceof H.map.Marker) && objectToDraw === 'P') {
         dropParkingMarker(coord);
     }
 });
@@ -404,7 +377,7 @@ group.addEventListener('tap', function (evt) {
     console.log("group", evt.target)
     // event target is the marker itself, group is a parent event target
     // for all objects that it contains
-    var bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
+    let bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
         // read custom data
         content: evt.target.getData()
     });
@@ -412,13 +385,12 @@ group.addEventListener('tap', function (evt) {
     ui.addBubble(bubble);
 }, false);
 
-// add 'longpress' event listener, remove marker from the group
+/* // add 'longpress' event listener, remove marker from the group
 group.addEventListener('longpress', function (evt) {
-    //group.removeObject(evt.target);
-    console.log(evt.target);
-}, false);
-
-
+    if (evt.target instanceof H.marker.Marker) {
+        group.removeObject(evt.target);
+    }
+}, false); */
 
 //Step 3: make the map interactive
 // MapEvents enables the event system
