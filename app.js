@@ -25,6 +25,9 @@ app.set('view engine', 'ejs');
 // Bodyparser
 app.use(express.urlencoded({ extended: false }));
 
+// Serve public folder for custom CSS, JS, images
+app.use(express.static('public'))
+
 // Express Session
 app.use(session({
     secret: 'secret',
@@ -45,7 +48,7 @@ app.use((req, res, next) => {
     res.locals.error_msg = req.flash('error_msg');
     res.locals.error = req.flash('error');
     next();
-} )
+})
 
 // Routes
 app.use('/', require('./routes/index'));

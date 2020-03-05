@@ -1,3 +1,40 @@
-<h1 class="mt-4">Dashboard</h1>
-<p class="lead mb-3">Welcome <%= user.name %></p>
-<a href="/users/logout" class="btn btn-secondary">Logout</a>
+<%- include('./partials/header.ejs'); %>
+<div id="main">
+    <div id="info">
+        <div id="user-panel">
+            <h1 class="mt-4">Dashboard</h1>
+            <p class="lead mb-3">Welcome <%= user.name %></p>
+            <a href="/users/logout" class="btn btn-danger">Logout</a>
+        </div>
+        <div id="smart-objects">
+            <div class="smart-objects-group">
+                <i id="parking" class="fas fa-parking fa-5x"></i>
+                <i id="traffic-light" class="fas fa-traffic-light fa-5x"></i>
+            </div>
+            <div class="smart-objects-group">
+                <i id="water-sensor" class="fas fa-water fa-5x"></i>
+                <i id="gas-sensor" class="fas fa-tint fa-5x"></i>
+            </div>
+            <div class="smart-objects-group">
+                <i id="parking-sensor" class="fas fa-car-crash fa-5x"></i>
+                <i id="parking-ramp" class="fas fa-window-minimize fa-5x"></i>
+            </div>
+            <div class="smart-objects-group">
+                <i id="vendomat" class="fas fa-cookie fa-5x"></i>
+                <i id="traffic-counter" class="fas fa-calculator fa-5x"></i>
+            </div>
+            <div class="smart-objects-group">
+                <i id="wify" class="fas fa-wifi fa-5x"></i>
+                <i id="sensor-air" class="fas fa-wind fa-5x"></i>      
+            </div>
+            <div class="smart-objects-group">
+                <i id="smart-bench" class="fas fa-couch fa-5x"></i>
+                <i id="smart-trash-can" class="fas fa-trash fa-5x"></i>    
+            </div>
+        </div>
+    </div>
+    <div id="visibility">Set visibility</div>
+    <div id="map"></div>
+</div>
+
+<%- include('./partials/footer-script.ejs'); %>
