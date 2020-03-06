@@ -4,20 +4,78 @@
  */
 const setSelectedItem = item => {
     const itemClicked = item.toElement.id;
+    let iconItem;
     for (i = 0; i < mapItems.length; i++) {
-        let item = mapItems.item(i);
+        iconItem = mapItems.item(i);
 
-        if (item.id === itemClicked) {
-            item.classList.add("selected");
+        if (iconItem.id === itemClicked) {
+            setObjectToDraw(iconItem.id);
+            if (iconItem.classList.contains("selected")) {
+                iconItem.classList.remove("selected");
+                setObjectToDraw(null);
+            } else {
+                iconItem.classList.add("selected");
+            }
+        } else {
+            iconItem.classList.remove("selected");
         }
-        else {
-            item.classList.remove("selected");
-        }
-      }
+    }
+}
+
+/**
+ * Sets the marker to place on the map
+ * @param {String} obj 
+ */
+const setObjectToDraw = (id) => {
+    switch (id) {
+        case "parking":
+            objectToDraw = "P";
+            break;
+        case "traffic-light":
+            objectToDraw = "T";
+            break;
+        case "water-sensor":
+            objectToDraw = "W";
+            break;
+        case "gas-sensor":
+            objectToDraw = "G";
+            break;
+        case "parking-sensor":
+            objectToDraw = "PS";
+            break;
+        case "parking-ramp":
+            objectToDraw = "PR";
+            break;
+        case "vendomat":
+            objectToDraw = "V";
+            break;
+        case "traffic-counter":
+            objectToDraw = "TC";
+            break;
+        case "wify":
+            objectToDraw = "Wifi";
+            break;
+        case "sensor-air":
+            objectToDraw = "A";
+            break;
+        case "smart-bench":
+            objectToDraw = "B";
+            break;
+        case "smart-trash-can":
+            objectToDraw = "STC";
+            break;
+        case null:
+            objectToDraw = null;
+            break;
+        default:
+            objectToDraw = null;
+    }
+    resetParkingMarkers();
 }
 
 // Find all mapItems
 let mapItems = document.getElementsByTagName("i");
+let clickedItem;
 
 // Add 'click' listeners to each mapItem
 for (let item of mapItems) {

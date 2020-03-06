@@ -10,18 +10,7 @@ const toggleVisibility = () => {
     group.setVisibility(group.getVisibility() ? false : true);
 }
 
-document.getElementById("parking").addEventListener("click", () => setObjectToDraw("P"));
-document.getElementById("traffic-light").addEventListener("click", () => setObjectToDraw("T"));
 document.getElementById("visibility").addEventListener("click", toggleVisibility);
-
-/**
- * Sets the marker to place on the map
- * @param {String} obj 
- */
-const setObjectToDraw = (obj) => {
-    objectToDraw = obj;
-    resetParkingMarkers();
-}
 
 /**
  * Moves the map to display over Zagreb
@@ -242,10 +231,8 @@ const drawParking = (edges) => {
 
     // add 'longpress' event listener, remove parking from the map
     parkingGroup.addEventListener('longpress', function (evt) {
-
         group.removeObject(parkingGroup);
 
-        console.log(parkingGroup)
         let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
         // hide vertice markers
@@ -348,10 +335,9 @@ map.addEventListener('tap', evt => {
     let target = evt.target;
     // Log 'tap' and 'mouse' events:
     let coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
-    console.log(objectToDraw)
 
     // Check we're not clicking on a marker object and we are not drawing a parking
-    if (!(target instanceof H.map.Marker) && objectToDraw !== 'P') {
+    if (!(target instanceof H.map.Marker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
         dropMarker(coord, objectToDraw);
     }
 
@@ -373,15 +359,14 @@ map.addObject(group);
 map.addObject(parkingMarkersGroup);
 
 // add 'tap' event listener, that opens info bubble, to the group
-group.addEventListener('tap', function (evt) {
-    console.log("group", evt.target)
+group.addEventListener('tap', evt => {
     // event target is the marker itself, group is a parent event target
     // for all objects that it contains
     let bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
         // read custom data
         content: evt.target.getData()
     });
-    // show info bubble
+
     ui.addBubble(bubble);
 }, false);
 
