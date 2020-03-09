@@ -47,6 +47,18 @@ const dropMarker = (coordinate, smartObject) => {
     marker.setData(smartObject);
     group.addObject(marker);
     enableMarkerDrag();
+
+    const URL = '/markers/marker';
+    const payload = { username: 'example' };
+
+    fetch(URL,
+        {   
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) { alert(JSON.stringify(data)) })
 }
 
 /**
