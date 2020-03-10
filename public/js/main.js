@@ -4,13 +4,16 @@ let parkingMarkers = [];    // Array to store parkingMarkers
 let parkingMarkerLines = [];
 
 /**
- * Make all groups visible/hidden
+ * Toggle group visibility
  */
 const toggleVisibility = () => {
+
     group.setVisibility(group.getVisibility() ? false : true);
+    visibilityBtn.innerHTML = group.getVisibility() ? "Hide" : "Show";
 }
 
-document.getElementById("visibility").addEventListener("click", toggleVisibility);
+const visibilityBtn = document.getElementById("visibility");
+visibilityBtn.addEventListener("click", toggleVisibility);
 
 /**
  * Moves the map to display over Zagreb
@@ -25,52 +28,92 @@ const moveMapToZagreb = map => {
 /**
  * Places a marker on a map (non-parking marker)
  * @param {Object} coordinate 
- * @param {String} smartObject 
+ * @param {String} type 
  */
-const dropMarker = (coordinate, smartObject) => {
+const dropMarker = (coordinate, type) => {
     // Define a variable holding SVG mark-up that defines an icon image:
     let svgMarkup = '<svg width="24" height="24" ' +
         'xmlns="http://www.w3.org/2000/svg">' +
         '<rect stroke="white" fill="#1b468d" x="1" y="1"  width="22" ' +
         'height="22" /><text x="12" y="18" font-size="12pt" ' +
         'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
-        'fill="white">' + smartObject + '</text></svg>';
+        'fill="white">' + type + '</text></svg>';
 
     let icon = new H.map.Icon(svgMarkup);
     let marker = new H.map.Marker(coordinate, { icon: icon });
     marker.draggable = true;
 
-    marker.addEventListener('longpress', (evt) => {
-        group.removeObject(evt.target);
+    marker.addEventListener('longpress', (evt) => {    
+        removeMarker(evt)
     });
-    // add custom data to the marker
-    marker.setData(smartObject);
-    group.addObject(marker);
-    enableMarkerDrag();
 
+    const markerData = {marker, type, coordinate}
+    // Save marker
+    saveMarker(markerData);
+}
+
+/**
+ * Save marker to DB
+ * @param {Object} marker 
+ */
+const saveMarker = markerData => {
+    const { marker, type, coordinate } = markerData;
+
+    // API - endpoint to save marker 
     const URL = '/markers/marker';
-    const payload = { username: 'example' };
+    const data = {
+        type: type,
+        price: 150,
+        coordinates: coordinate
+    };
 
     fetch(URL,
-        {   
+        {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(data)
         })
-        .then(function (res) { return res.json(); })
-        .then(function (data) { alert(JSON.stringify(data)) })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            marker.setData({
+                "id": data._id, 
+                "type": data.type
+            })
+            group.addObject(marker);
+            enableMarkerDrag();
+        });
+}
+/**
+ * Remove marker from DB
+ * @param {Object} evt 
+ */
+const removeMarker = evt => {
+    // API - endpoint to delete marker 
+    const URL = '/markers/marker';
+    const id = evt.target.getData("_id");
+
+    fetch(URL,
+        {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(id)
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            group.removeObject(evt.target);
+        });
 }
 
 /**
  * Places a parkingMarker on the map in order to construct a parking object
  * @param {Object} coordinate 
  */
-const dropParkingMarker = (coordinate) => {
+const dropParkingMarker = coordinate => {
     let icon = createParkingMarkerIcon();
-    let svgCircle = '<svg width="20" height="20" version="1.1" xmlns="http://www.w3.org/2000/svg">' +
-        '<circle cx="10" cy="10" r="4" fill="transparent" stroke="red" stroke-width="3"/>' +
-        '</svg>';
-    let icon2 = new H.map.Icon(svgCircle)
     let marker = new H.map.DomMarker(coordinate, { icon: icon });
     parkingMarkers.push(marker);
     // Ensure that the marker can receive drag events
@@ -198,7 +241,7 @@ const drawParkingMarkerLine = () => {
  * Draws a parking overlay after parkingMarkers have been connected
  * @param {Array} edges 
  */
-const drawParking = (edges) => {
+const drawParking = edges => {
     let parkingEdges = [];
     edges.forEach(edge => {
         // Get coordinates of each marker
@@ -376,7 +419,7 @@ group.addEventListener('tap', evt => {
     // for all objects that it contains
     let bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
         // read custom data
-        content: evt.target.getData()
+        content: evt.target.getData().type
     });
 
     ui.addBubble(bubble);

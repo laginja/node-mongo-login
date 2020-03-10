@@ -51,3 +51,7 @@ html, body {
 .selected { 
     color: rgb(4, 134, 185);
 }
+
+.visibility {
+    margin: 0 auto;
+}
