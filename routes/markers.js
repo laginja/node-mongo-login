@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { ensureAuthenticated } = require('../auth/auth');
 
 // User model
 const Marker = require('../models/Marker');
@@ -8,7 +9,7 @@ const Marker = require('../models/Marker');
 router.use(express.json())
 
 // Insert marker
-router.post('/marker', (req, res) => {
+router.post('/marker', ensureAuthenticated, (req, res) => {
     const { type, price, coordinates } = req.body;
 
     if (!type || !price || !coordinates) {
@@ -28,7 +29,7 @@ router.post('/marker', (req, res) => {
 });
 
 // Delete marker
-router.delete('/marker', (req, res) => {
+router.delete('/marker', ensureAuthenticated, (req, res) => {
     const { id } = req.body;
     
     if (!id) {
