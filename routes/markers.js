@@ -2,11 +2,22 @@ const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../auth/auth');
 
-// User model
 const Marker = require('../models/Marker');
 
 // Must tell this route to expect JSON in body
 router.use(express.json())
+
+// Find all markers
+router.get('/all', ensureAuthenticated, (req, res) => {
+
+    // find all markers
+    Marker.find({}).then(result => {
+        res.json(result)
+    }).catch(err => {
+        console.log(err)
+    })
+
+});
 
 // Insert marker
 router.post('/marker', ensureAuthenticated, (req, res) => {
@@ -31,12 +42,12 @@ router.post('/marker', ensureAuthenticated, (req, res) => {
 // Delete marker
 router.delete('/marker', ensureAuthenticated, (req, res) => {
     const { id } = req.body;
-    
+
     if (!id) {
         console.log("Marker not found");
     } else {
         // delete marker with a given id
-        Marker.deleteOne({_id: id}).then(marker => {
+        Marker.deleteOne({ _id: id }).then(() => {
             res.json("Marker deleted")
         }).catch(err => {
             console.log(err)

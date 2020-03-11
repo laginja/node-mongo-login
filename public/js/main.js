@@ -2,6 +2,7 @@ let objectToDraw = null;
 let markerClick = false;
 let parkingMarkers = [];    // Array to store parkingMarkers
 let parkingMarkerLines = [];
+const visibilityBtn = document.getElementById("visibility");
 
 /**
  * Toggle group visibility
@@ -12,18 +13,7 @@ const toggleVisibility = () => {
     visibilityBtn.innerHTML = group.getVisibility() ? "Hide" : "Show";
 }
 
-const visibilityBtn = document.getElementById("visibility");
 visibilityBtn.addEventListener("click", toggleVisibility);
-
-/**
- * Moves the map to display over Zagreb
- *
- * @param  {H.Map} map      A HERE Map instance within the application
- */
-const moveMapToZagreb = map => {
-    map.setCenter({ lat: 45.80724, lng: 15.96757 });
-    map.setZoom(14);
-}
 
 /**
  * Places a marker on a map (non-parking marker)
@@ -79,10 +69,15 @@ const saveMarker = markerData => {
         .then(data => {
             marker.setData({
                 "id": data._id, 
-                "type": data.type
+                "type": data.type,
+                "price": data.price
             })
             group.addObject(marker);
             enableMarkerDrag();
+
+            // calculate new total
+            total += data.price;
+            totalCost.innerHTML = total;
         });
 }
 /**
@@ -92,19 +87,23 @@ const saveMarker = markerData => {
 const removeMarker = evt => {
     // API - endpoint to delete marker 
     const URL = '/markers/marker';
-    const id = evt.target.getData("_id");
+    const marker = evt.target.getData();
 
     fetch(URL,
         {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(id)
+            body: JSON.stringify(marker)
         })
         .then(response => {
             return response.json();
         })
         .then(data => {
             group.removeObject(evt.target);
+
+            // calculate new total
+            total -= marker.price;
+            totalCost.innerHTML = total;
         });
 }
 
@@ -195,7 +194,7 @@ const enableMarkerDrag = () => {
     // disable the default draggability of the underlying map
     // and calculate the offset between mouse and target's position
     // when starting to drag a marker object:
-    map.addEventListener('dragstart', function (ev) {
+    map.addEventListener('dragstart', ev => {
         let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.Marker) {
@@ -208,7 +207,7 @@ const enableMarkerDrag = () => {
 
     // re-enable the default draggability of the underlying map
     // when dragging has completed
-    map.addEventListener('dragend', function (ev) {
+    map.addEventListener('dragend', ev => {
         let target = ev.target;
         if (target instanceof H.map.Marker) {
             behavior.enable();
@@ -217,7 +216,7 @@ const enableMarkerDrag = () => {
 
     // Listen to the drag event and move the position of the marker
     // as necessary
-    map.addEventListener('drag', function (ev) {
+    map.addEventListener('drag', ev => {
         let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.Marker) {
@@ -269,7 +268,7 @@ const drawParking = edges => {
     parking.draggable = true;
 
     // create markers for each polygon's vertice which will be used for dragging
-    parking.getGeometry().getExterior().eachLatLngAlt(function (lat, lng, alt, index) {
+    parking.getGeometry().getExterior().eachLatLngAlt((lat, lng, alt, index) => {
         let vertice = new H.map.Marker(
             { lat, lng },
             {
@@ -285,19 +284,19 @@ const drawParking = edges => {
     group.addObject(parkingGroup);
 
     // add 'longpress' event listener, remove parking from the map
-    parkingGroup.addEventListener('longpress', function (evt) {
+    parkingGroup.addEventListener('longpress', evt => {
         group.removeObject(parkingGroup);
 
         let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
         // hide vertice markers
-        polygonTimeout = setTimeout(function () {
+        polygonTimeout = setTimeout(() => {
             verticeGroup.setVisibility(true);
         }, timeout);
     }, false);
 
     // event listener for main group to show markers if moved in with mouse (or touched on touch devices)
-    parkingGroup.addEventListener('pointerenter', function (evt) {
+    parkingGroup.addEventListener('pointerenter', evt => {
         if (polygonTimeout) {
             clearTimeout(polygonTimeout);
             polygonTimeout = null;
@@ -309,27 +308,27 @@ const drawParking = edges => {
 
     // event listener for main group to hide vertice markers if moved out with mouse (or released finger on touch devices)
     // the vertice markers are hidden on touch devices after specific timeout
-    parkingGroup.addEventListener('pointerleave', function (evt) {
+    parkingGroup.addEventListener('pointerleave', evt => {
         let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
         // hide vertice markers
-        polygonTimeout = setTimeout(function () {
+        polygonTimeout = setTimeout(() => {
             verticeGroup.setVisibility(false);
         }, timeout);
     }, true);
 
     // event listener for vertice markers group to change the cursor to pointer
-    verticeGroup.addEventListener('pointerenter', function (evt) {
+    verticeGroup.addEventListener('pointerenter', evt => {
         document.body.style.cursor = 'pointer';
     }, true);
 
     // event listener for vertice markers group to change the cursor to default
-    verticeGroup.addEventListener('pointerleave', function (evt) {
+    verticeGroup.addEventListener('pointerleave', evt => {
         document.body.style.cursor = 'default';
     }, true);
 
     // event listener for vertice markers group to resize the geo polygon object if dragging over markers
-    verticeGroup.addEventListener('drag', function (evt) {
+    verticeGroup.addEventListener('drag', evt => {
         let pointer = evt.currentPointer,
             geoLineString = parking.getGeometry().getExterior(),
             geoPoint = map.screenToGeo(pointer.viewportX, pointer.viewportY);
@@ -362,86 +361,3 @@ const resetParkingMarkers = () => {
     parkingMarkerLines = [];
     parkingMarkers = [];
 }
-
-/**
- * Boilerplate map initialization code starts below:
- */
-
-//Step 1: initialize communication with the platform
-const platform = new H.service.Platform({
-    'apikey': 'Izxy6fjoTs6MBcl7TgGMR6eqs85IK2klw4GV1FL_y4g'
-});
-
-const defaultLayers = platform.createDefaultLayers();
-
-//Step 2: initialize a map - this map is centered over Europe
-let map = new H.Map(document.getElementById('map'),
-    defaultLayers.vector.normal.map, {
-    center: { lat: 50, lng: 5 },
-    zoom: 4,
-    pixelRatio: window.devicePixelRatio || 1
-});
-
-// add a resize listener to make sure that the map occupies the whole container
-window.addEventListener('resize', () => map.getViewPort().resize());
-
-// Add event listeners:
-map.addEventListener('tap', evt => {
-    let target = evt.target;
-    // Log 'tap' and 'mouse' events:
-    let coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
-
-    // Check we're not clicking on a marker object and we are not drawing a parking
-    if (!(target instanceof H.map.Marker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
-        dropMarker(coord, objectToDraw);
-    }
-
-    // Check we're not clicking on a dommarker object and we are drawing a parking
-    if (!(target instanceof H.map.DomMarker || target instanceof H.map.Marker) && objectToDraw === 'P') {
-        dropParkingMarker(coord);
-    }
-});
-
-// Create groups for the markers
-let group = new H.map.Group({
-    volatility: true // mark the group as volatile for smooth dragging of all it's objects
-});
-let parkingMarkersGroup = new H.map.Group({
-    volatility: true // mark the group as volatile for smooth dragging of all it's objects
-});
-
-map.addObject(group);
-map.addObject(parkingMarkersGroup);
-
-// add 'tap' event listener, that opens info bubble, to the group
-group.addEventListener('tap', evt => {
-    // event target is the marker itself, group is a parent event target
-    // for all objects that it contains
-    let bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
-        // read custom data
-        content: evt.target.getData().type
-    });
-
-    ui.addBubble(bubble);
-}, false);
-
-/* // add 'longpress' event listener, remove marker from the group
-group.addEventListener('longpress', function (evt) {
-    if (evt.target instanceof H.marker.Marker) {
-        group.removeObject(evt.target);
-    }
-}, false); */
-
-//Step 3: make the map interactive
-// MapEvents enables the event system
-// Behavior implements default interactions for pan/zoom (also on mobile touch environments)
-let behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
-
-// Create the default UI components
-let ui = H.ui.UI.createDefault(map, defaultLayers);
-
-// Now use the map as required...
-window.onload = () => {
-    moveMapToZagreb(map);
-}
-

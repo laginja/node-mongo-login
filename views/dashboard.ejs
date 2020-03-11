@@ -6,10 +6,11 @@
             <p class="lead mb-3">Welcome <%= user.name %></p>
             <a href="/users/logout" class="btn btn-danger">Logout</a>
         </div>
-        <div class="visibility">
-            <button id="visibility" class="btn btn-danger">Hide</button>
-        </div>
+
         <div id="smart-objects">
+            <div class="visibility">
+                <button id="visibility" class="btn btn-danger">Hide</button>
+            </div>
             <div class="smart-objects-group">
                 <i id="parking" class="fas fa-parking fa-5x"></i>
                 <i id="traffic-light" class="fas fa-traffic-light fa-5x"></i>
@@ -28,12 +29,15 @@
             </div>
             <div class="smart-objects-group">
                 <i id="wify" class="fas fa-wifi fa-5x"></i>
-                <i id="sensor-air" class="fas fa-wind fa-5x"></i>      
+                <i id="sensor-air" class="fas fa-wind fa-5x"></i>
             </div>
             <div class="smart-objects-group">
                 <i id="smart-bench" class="fas fa-couch fa-5x"></i>
-                <i id="smart-trash-can" class="fas fa-trash fa-5x"></i>    
+                <i id="smart-trash-can" class="fas fa-trash fa-5x"></i>
             </div>
+        </div>
+        <div class="total-cost">
+            <h3 id="total-cost">0</h3>
         </div>
     </div>
     <div id="map"></div>
