@@ -21,25 +21,101 @@ visibilityBtn.addEventListener("click", toggleVisibility);
  * @param {String} type 
  */
 const dropMarker = (coordinate, type) => {
-    // Define a variable holding SVG mark-up that defines an icon image:
-    let svgMarkup = '<svg width="24" height="24" ' +
-        'xmlns="http://www.w3.org/2000/svg">' +
-        '<rect stroke="white" fill="#1b468d" x="1" y="1"  width="22" ' +
-        'height="22" /><text x="12" y="18" font-size="12pt" ' +
-        'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
-        'fill="white">' + type + '</text></svg>';
+    // Create a <div> that will represent the marker
+    let outerElement = createMarkerIcon(type);
 
-    let icon = new H.map.Icon(svgMarkup);
-    let marker = new H.map.Marker(coordinate, { icon: icon });
+    const onMouseOver = evt => {
+        evt.target.style.opacity = 0.7;
+        evt.target.style.cursor = 'pointer';
+    }
+
+    const onMouseOut = evt => {
+        evt.target.style.opacity = 1;
+        evt.target.style.cursor = 'default';
+    }
+
+    //create dom icon and add/remove listeners
+    let domIcon = new H.map.DomIcon(outerElement, {
+        // the function is called every time marker enters the viewport
+        onAttach: function (clonedElement, domIcon, domMarker) {
+            clonedElement.addEventListener('mouseover', onMouseOver);
+            clonedElement.addEventListener('mouseout', onMouseOut);
+        },
+        // the function is called every time marker leaves the viewport
+        onDetach: function (clonedElement, domIcon, domMarker) {
+            clonedElement.removeEventListener('mouseover', onMouseOver);
+            clonedElement.removeEventListener('mouseout', onMouseOut);
+        }
+    });
+
+    let marker = new H.map.DomMarker(coordinate, { icon: domIcon });
     marker.draggable = true;
 
-    marker.addEventListener('longpress', (evt) => {    
+    marker.addEventListener('longpress', (evt) => {
         removeMarker(evt)
     });
 
-    const markerData = {marker, type, coordinate}
+    const markerData = { marker, type, coordinate }
     // Save marker
     saveMarker(markerData);
+}
+
+const createMarkerIcon = type => {
+    // Create a <div> that will represent the marker
+    let outerElement = document.createElement('div');
+    let iconElement = document.createElement('i');
+
+    outerElement.style.userSelect = 'none';
+    outerElement.style.webkitUserSelect = 'none';
+    outerElement.style.msUserSelect = 'none';
+    outerElement.style.mozUserSelect = 'none';
+    outerElement.style.cursor = 'default';
+
+    switch (type) {
+        case 'T':
+            iconElement.className = "fas fa-traffic-light fa-2x";
+            break;
+        case 'W':
+            iconElement.className = "fas fa-water fa-2x";
+            break;
+        case 'G':
+            iconElement.className = "fas fa-tint fa-2x";
+            break;
+        case 'PS':
+            iconElement.className = "fas fa-car-crash fa-2x";
+            break;
+        case 'PR':
+            iconElement.className = "fas fa-window-minimize fa-2x";
+            break;
+        case 'V':
+            iconElement.className = "fas fa-cookie fa-2x";
+            break;
+        case 'TC':
+            iconElement.className = "fas fa-calculator fa-2x";
+            break;
+        case 'Wifi':
+            iconElement.className = "fas fa-wifi fa-2x";
+            break;
+        case 'A':
+            iconElement.className = "fas fa-wind fa-2x";
+            break;
+        case 'B':
+            iconElement.className = "fas fa-couch fa-2x";
+            break;
+        case 'STC':
+            iconElement.className = "fas fa-trash fa-2x";
+            break;
+
+    }
+
+    // add negative margin to inner element
+    // to move the anchor to center of the div
+    iconElement.style.marginTop = '-16px';
+    iconElement.style.marginLeft = '-14px';
+
+    outerElement.appendChild(iconElement);
+
+    return outerElement;
 }
 
 /**
@@ -68,7 +144,7 @@ const saveMarker = markerData => {
         })
         .then(data => {
             marker.setData({
-                "id": data._id, 
+                "id": data._id,
                 "type": data.type,
                 "price": data.price
             })
@@ -174,13 +250,11 @@ const createParkingMarkerIcon = () => {
     let domIcon = new H.map.DomIcon(outerElement, {
         // the function is called every time marker enters the viewport
         onAttach: function (clonedElement, domIcon, domMarker) {
-            console.log("entered")
             clonedElement.addEventListener('mouseover', changeOpacity);
             clonedElement.addEventListener('mouseout', changeOpacityToOne);
         },
         // the function is called every time marker leaves the viewport
         onDetach: function (clonedElement, domIcon, domMarker) {
-            console.log("left")
             clonedElement.removeEventListener('mouseover', changeOpacity);
             clonedElement.removeEventListener('mouseout', changeOpacityToOne);
         }

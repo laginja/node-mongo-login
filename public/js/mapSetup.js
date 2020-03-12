@@ -21,27 +21,43 @@ const addMarkersToMap = () => {
         .then(data => {
             data.forEach(element => {
                 total += element.price;
-                
+
                 setMarkerData(element);
                 enableMarkerDrag();
             });
             totalCost.innerHTML = total;
         });
-
-        
 }
 
 const setMarkerData = element => {
-    // Define a variable holding SVG mark-up that defines an icon image:
-    let svgMarkup = '<svg width="24" height="24" ' +
-        'xmlns="http://www.w3.org/2000/svg">' +
-        '<rect stroke="white" fill="#1b468d" x="1" y="1"  width="22" ' +
-        'height="22" /><text x="12" y="18" font-size="12pt" ' +
-        'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
-        'fill="white">' + element.type + '</text></svg>';
+    // Create a <div> that will represent the marker
+    let outerElement = createMarkerIcon(element.type);
 
-    let icon = new H.map.Icon(svgMarkup);
-    let marker = new H.map.Marker(element.coordinates, { icon: icon });
+    const onMouseOver = evt => {
+        evt.target.style.opacity = 0.7;
+        evt.target.style.cursor = 'pointer';
+    }
+
+    const onMouseOut = evt => {
+        evt.target.style.opacity = 1;
+        evt.target.style.cursor = 'default';
+    }
+
+    //create dom icon and add/remove listeners
+    let domIcon = new H.map.DomIcon(outerElement, {
+        // the function is called every time marker enters the viewport
+        onAttach: function (clonedElement, domIcon, domMarker) {
+            clonedElement.addEventListener('mouseover', onMouseOver);
+            clonedElement.addEventListener('mouseout', onMouseOut);
+        },
+        // the function is called every time marker leaves the viewport
+        onDetach: function (clonedElement, domIcon, domMarker) {
+            clonedElement.removeEventListener('mouseover', onMouseOver);
+            clonedElement.removeEventListener('mouseout', onMouseOut);
+        }
+    });
+
+    let marker = new H.map.DomMarker(element.coordinates, { icon: domIcon });
     marker.draggable = true;
 
     marker.addEventListener('longpress', (evt) => {
@@ -81,7 +97,7 @@ map.addEventListener('tap', evt => {
     let coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
 
     // Check we're not clicking on a marker object and we are not drawing a parking
-    if (!(target instanceof H.map.Marker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
+    if (!(target instanceof H.map.DomMarker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
         dropMarker(coord, objectToDraw);
     }
 
