@@ -9,14 +9,11 @@ router.use(express.json())
 
 // Find all markers
 router.get('/all', ensureAuthenticated, (req, res) => {
-
-    // find all markers
     Marker.find({}).then(result => {
         res.json(result)
     }).catch(err => {
         console.log(err)
     })
-
 });
 
 // Insert marker

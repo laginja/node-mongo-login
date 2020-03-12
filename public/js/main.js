@@ -263,7 +263,6 @@ const createParkingMarkerIcon = () => {
     return domIcon;
 }
 
-
 const enableMarkerDrag = () => {
     // disable the default draggability of the underlying map
     // and calculate the offset between mouse and target's position
@@ -271,7 +270,7 @@ const enableMarkerDrag = () => {
     map.addEventListener('dragstart', ev => {
         let target = ev.target,
             pointer = ev.currentPointer;
-        if (target instanceof H.map.Marker) {
+        if (target instanceof H.map.DomMarker) {
             let targetPosition = map.geoToScreen(target.getGeometry());
             target['offset'] = new H.math.Point(pointer.viewportX - targetPosition.x, pointer.viewportY - targetPosition.y);
             behavior.disable();
@@ -283,7 +282,7 @@ const enableMarkerDrag = () => {
     // when dragging has completed
     map.addEventListener('dragend', ev => {
         let target = ev.target;
-        if (target instanceof H.map.Marker) {
+        if (target instanceof H.map.DomMarker) {
             behavior.enable();
         }
     }, false);
@@ -293,7 +292,7 @@ const enableMarkerDrag = () => {
     map.addEventListener('drag', ev => {
         let target = ev.target,
             pointer = ev.currentPointer;
-        if (target instanceof H.map.Marker) {
+        if (target instanceof H.map.DomMarker) {
             target.setGeometry(map.screenToGeo(pointer.viewportX - target['offset'].x, pointer.viewportY - target['offset'].y));
         }
     }, false);
@@ -316,12 +315,17 @@ const drawParkingMarkerLine = () => {
  */
 const drawParking = edges => {
     let parkingEdges = [];
+    let edgeObjects = [];
     edges.forEach(edge => {
+        const edgeObject = { lat: edge.b.lat, lng: edge.b.lng };
         // Get coordinates of each marker
         parkingEdges.push(edge.b.lat);
         parkingEdges.push(edge.b.lng);
         parkingEdges.push(0);
+
+        edgeObjects.push(edgeObject);
     });
+
     let style = {
         fillColor: 'rgba(35, 51, 129, 0.3)',
         lineWidth: 2,
@@ -354,12 +358,15 @@ const drawParking = edges => {
         verticeGroup.addObject(vertice);
     });
 
-    // add group with parking and it's vertices (markers) on the map
-    group.addObject(parkingGroup);
+    const parkingData = { parking, edgeObjects, parkingGroup };
+
+    // insert parking into DB
+    saveParking(parkingData);
 
     // add 'longpress' event listener, remove parking from the map
     parkingGroup.addEventListener('longpress', evt => {
         group.removeObject(parkingGroup);
+        removeParking(evt)
 
         let timeout = (evt.currentPointer.type == 'touch') ? 1000 : 0;
 
@@ -421,6 +428,72 @@ const drawParking = edges => {
 
     // Remove parking markers from the map
     resetParkingMarkers();
+}
+
+/**
+ * Save parking to DB
+ * @param {Object} parking 
+ */
+const saveParking = parkingData => {
+
+    const { parking, edgeObjects, parkingGroup } = parkingData;
+
+    // API - endpoint to save parking 
+    const URL = '/parkings/parking';
+    const data = {
+        price: 300,
+        edges: edgeObjects
+    };
+
+    fetch(URL,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            parking.setData({
+                "id": data._id,
+                "price": data.price
+            });
+
+            // add group with parking and it's vertices (markers) on the map
+            group.addObject(parkingGroup);
+
+            // calculate new total
+            total += data.price;
+            totalCost.innerHTML = total;
+        });
+}
+
+/**
+ * Remove parking from DB
+ * @param {Object} evt 
+ */
+const removeParking = evt => {
+    // API - endpoint to delete marker 
+    const URL = '/parkings/parking';
+    const parking = evt.target.getData();
+
+    fetch(URL,
+        {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parking)
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+
+
+            // calculate new total
+            total -= parking.price;
+            totalCost.innerHTML = total;
+        });
 }
 
 /**
