@@ -5,6 +5,10 @@ const MarkerSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    name: {
+        type: String,
+        required: true
+    },
     price: {
         type: Number,
         required: true

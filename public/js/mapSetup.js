@@ -1,5 +1,8 @@
 let total = 0;
+let newMarkerCoordinates;
 const totalCost = document.getElementById("total-cost");
+// Get the modal
+const modal = document.getElementById("myModal");
 
 const moveMapToZagreb = map => {
     map.setCenter({ lat: 45.80724, lng: 15.96757 });
@@ -232,18 +235,26 @@ window.addEventListener('resize', () => map.getViewPort().resize());
 map.addEventListener('tap', evt => {
     let target = evt.target;
     // Log 'tap' and 'mouse' events:
-    let coord = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
+    newMarkerCoordinates = map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY);
 
     // Check we're not clicking on a marker object and we are not drawing a parking
     if (!(target instanceof H.map.DomMarker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
-        dropMarker(coord, objectToDraw);
+        modal.style.display = "flex";
+        //dropMarker(newMarkerCoordinates, objectToDraw);
     }
 
     // Check we're not clicking on a dommarker object and we are drawing a parking
     if (!(target instanceof H.map.DomMarker || target instanceof H.map.Marker) && objectToDraw === 'P') {
-        dropParkingMarker(coord);
+        dropParkingMarker(newMarkerCoordinates);
     }
 });
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
 
 // Create groups for the markers
 let group = new H.map.Group({

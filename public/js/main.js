@@ -3,6 +3,7 @@ let markerClick = false;
 let parkingMarkers = [];    // Array to store parkingMarkers
 let parkingMarkerLines = [];
 const visibilityBtn = document.getElementById("visibility");
+const dropMarkerButton = document.getElementById("dropMarker");
 
 /**
  * Toggle group visibility
@@ -13,16 +14,30 @@ const toggleVisibility = () => {
     visibilityBtn.innerHTML = group.getVisibility() ? "Hide" : "Show";
 }
 
+const validateMarkerInput = () => {
+    const price = document.getElementById("markerPrice").value;
+    const name = document.getElementById("markerName").value;
+    modal.style.display = "none";
+
+    const markerData = { type: objectToDraw, name, price, coordinates: newMarkerCoordinates }
+    dropMarker(markerData)
+
+    document.getElementById("markerPrice").value = null;
+    document.getElementById("markerName").value = '';
+}
+
 visibilityBtn.addEventListener("click", toggleVisibility);
+dropMarkerButton.addEventListener("click", validateMarkerInput);
+
 
 /**
  * Places a marker on a map (non-parking marker)
  * @param {Object} coordinate 
  * @param {String} type 
  */
-const dropMarker = (coordinate, type) => {
+const dropMarker = markerData => {
     // Create a <div> that will represent the marker
-    let outerElement = createMarkerIcon(type);
+    let outerElement = createMarkerIcon(markerData.type);
 
     const onMouseOver = evt => {
         evt.target.style.opacity = 0.7;
@@ -48,14 +63,14 @@ const dropMarker = (coordinate, type) => {
         }
     });
 
-    let marker = new H.map.DomMarker(coordinate, { icon: domIcon });
+    let marker = new H.map.DomMarker(markerData.coordinates, { icon: domIcon });
     marker.draggable = true;
 
     marker.addEventListener('longpress', (evt) => {
         removeMarker(evt)
     });
 
-    const markerData = { marker, type, coordinate }
+    markerData = { ...markerData, marker }
     // Save marker
     saveMarker(markerData);
 }
@@ -123,14 +138,15 @@ const createMarkerIcon = type => {
  * @param {Object} marker 
  */
 const saveMarker = markerData => {
-    const { marker, type, coordinate } = markerData;
+    const { marker, type, name, price, coordinates } = markerData;
 
     // API - endpoint to save marker 
     const URL = '/markers/marker';
     const data = {
-        type: type,
-        price: 150,
-        coordinates: coordinate
+        type,
+        name,
+        price,
+        coordinates
     };
 
     fetch(URL,

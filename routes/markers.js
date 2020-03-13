@@ -18,13 +18,14 @@ router.get('/all', ensureAuthenticated, (req, res) => {
 
 // Insert marker
 router.post('/marker', ensureAuthenticated, (req, res) => {
-    const { type, price, coordinates } = req.body;
+    const { type, name, price, coordinates } = req.body;
 
-    if (!type || !price || !coordinates) {
+    if (!type || !name || !price || !coordinates) {
         console.log("Marker data incorrect");
     } else {
         const newMarker = new Marker({
             type,
+            name,
             price,
             coordinates
         });
