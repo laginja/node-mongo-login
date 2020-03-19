@@ -4,6 +4,7 @@ let parkingMarkers = [];    // Array to store parkingMarkers
 let parkingMarkerLines = [];
 const visibilityBtn = document.getElementById("visibility");
 const dropMarkerButton = document.getElementById("dropMarker");
+const markerToDropLabel = document.getElementById("markerToDropLabel");
 
 /**
  * Toggle group visibility
@@ -284,6 +285,7 @@ const enableMarkerDrag = () => {
     // and calculate the offset between mouse and target's position
     // when starting to drag a marker object:
     map.addEventListener('dragstart', ev => {
+        console.log("drag started")
         let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.DomMarker) {
@@ -297,8 +299,11 @@ const enableMarkerDrag = () => {
     // re-enable the default draggability of the underlying map
     // when dragging has completed
     map.addEventListener('dragend', ev => {
+        console.log("drag end")
         let target = ev.target;
         if (target instanceof H.map.DomMarker) {
+            let targetPosition = target.getGeometry();
+            console.log(target.getData().id + " " + targetPosition);
             behavior.enable();
         }
     }, false);
@@ -370,7 +375,10 @@ const drawParking = edges => {
             }
         );
         vertice.draggable = true;
-        vertice.setData({ 'verticeIndex': index })
+        vertice.setData({ 
+            'verticeIndex': index,
+            'type': 'vertice'
+        })
         verticeGroup.addObject(vertice);
     });
 
@@ -458,7 +466,8 @@ const saveParking = parkingData => {
     const URL = '/parkings/parking';
     const data = {
         price: 300,
-        edges: edgeObjects
+        edges: edgeObjects,
+        type: "parking"
     };
 
     fetch(URL,
@@ -473,7 +482,9 @@ const saveParking = parkingData => {
         .then(data => {
             parking.setData({
                 "id": data._id,
-                "price": data.price
+                "edges": data.edges,
+                "price": data.price,
+                "type": data.type
             });
 
             // add group with parking and it's vertices (markers) on the map

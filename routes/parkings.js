@@ -18,14 +18,15 @@ router.get('/all', ensureAuthenticated, (req, res) => {
 
 // Insert parking
 router.post('/parking', ensureAuthenticated, (req, res) => {
-    const { price, edges } = req.body;
+    const { price, edges, type } = req.body;
 
-    if (!price || !edges) {
+    if (!price || !edges || !type) {
         console.log("Parking data incorrect");
     } else {
         const newParking = new Parking({
             price,
-            edges
+            edges,
+            type
         });
         // Save a new parking
         newParking.save().then(parking => {

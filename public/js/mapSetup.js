@@ -1,6 +1,8 @@
 let total = 0;
 let newMarkerCoordinates;
 const totalCost = document.getElementById("total-cost");
+let bubble;
+
 // Get the modal
 const modal = document.getElementById("myModal");
 
@@ -90,7 +92,7 @@ const addParkingsToMap = () => {
         .then(data => {
             data.forEach(element => {
                 total += element.price;
-                
+
                 setParkingData(element);
                 enableMarkerDrag();
             });
@@ -130,7 +132,9 @@ const setParkingData = element => {
     // assign data to the parking
     parking.setData({
         "id": element._id,
-        "price": element.price
+        "edges": element.edges,
+        "price": element.price,
+        "type": element.type
     })
 
     // create markers for each polygon's vertice which will be used for dragging
@@ -239,8 +243,7 @@ map.addEventListener('tap', evt => {
 
     // Check we're not clicking on a marker object and we are not drawing a parking
     if (!(target instanceof H.map.DomMarker) && (objectToDraw !== 'P' && objectToDraw !== null)) {
-        modal.style.display = "flex";
-        //dropMarker(newMarkerCoordinates, objectToDraw);
+        addMarkerDropdown();
     }
 
     // Check we're not clicking on a dommarker object and we are drawing a parking
@@ -249,12 +252,52 @@ map.addEventListener('tap', evt => {
     }
 });
 
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
+const addMarkerDropdown = () => {
+    modal.style.display = "flex";
+
+    switch (objectToDraw) {
+        case 'T':
+            markerToDropLabel.innerHTML = "Traffic Light";
+            break;
+        case 'W':
+            markerToDropLabel.innerHTML = "Water Sensor";
+            break;
+        case 'G':
+            markerToDropLabel.innerHTML = "Air Sensor";
+            break;
+        case 'PS':
+            markerToDropLabel.innerHTML = "Parking Sensor";
+            break;
+        case 'PR':
+            markerToDropLabel.innerHTML = "Parking Ramp";
+            break;
+        case 'V':
+            markerToDropLabel.innerHTML = "Vending Machine";
+            break;
+        case 'TC':
+            markerToDropLabel.innerHTML = "Traffic Counter";
+            break;
+        case 'Wifi':
+            markerToDropLabel.innerHTML = "Wifi";
+            break;
+        case 'A':
+            markerToDropLabel.innerHTML = "Air Sensor";
+            break;
+        case 'B':
+            markerToDropLabel.innerHTML = "Smart Bench";
+            break;
+        case 'STC':
+            markerToDropLabel.innerHTML = "Smart Trash Can";
+            break;
     }
-  }
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function (event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
 
 // Create groups for the markers
 let group = new H.map.Group({
@@ -271,12 +314,21 @@ map.addObject(parkingMarkersGroup);
 group.addEventListener('tap', evt => {
     // event target is the marker itself, group is a parent event target
     // for all objects that it contains
-    let bubble = new H.ui.InfoBubble(evt.target.getGeometry(), {
-        // read custom data
-        content: evt.target.getData().type
-    });
 
-    ui.addBubble(bubble);
+    // remove bubble if it exists somewhere
+    if (ui.getBubbles().length > 0) {
+        ui.removeBubble(bubble);
+    }
+
+    if (evt.target.getData().type !== "vertice") {
+        const bubbleCoords = evt.target.getData().type === "parking" ? map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY) : evt.target.getGeometry();
+        bubble = new H.ui.InfoBubble(bubbleCoords, {
+            // read custom data
+            content: evt.target.getData().type
+        });
+
+        ui.addBubble(bubble);
+    }
 }, false);
 
 //Step 3: make the map interactive

@@ -16,7 +16,11 @@ const ParkingSchema = new mongoose.Schema({
                 required: true
             }
         }   
-    ]
+    ],
+    type: {
+        type: String,
+        required: true
+    }
 });
 
 const Parking = mongoose.model('Parking', ParkingSchema);

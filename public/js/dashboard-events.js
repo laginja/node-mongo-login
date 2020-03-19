@@ -64,11 +64,9 @@ const setObjectToDraw = (id) => {
         case "smart-trash-can":
             objectToDraw = "STC";
             break;
-        case null:
-            objectToDraw = null;
-            break;
         default:
             objectToDraw = null;
+            break;
     }
     resetParkingMarkers();
 }
