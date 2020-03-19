@@ -37,6 +37,25 @@ router.post('/marker', ensureAuthenticated, (req, res) => {
     }
 });
 
+// Update marker
+router.post('/update', ensureAuthenticated, (req, res) => {
+    const { id, coordinates } = req.body;
+
+    if (!id || !coordinates) {
+        console.log("Marker data incorrect");
+    } else {
+        let markerToUpdate;
+        // find markerToUpdate
+        Marker.findOne({_id: id}).then(result => {
+            markerToUpdate = result;
+            markerToUpdate.coordinates = coordinates;
+            markerToUpdate.save();
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+});
+
 // Delete marker
 router.delete('/marker', ensureAuthenticated, (req, res) => {
     const { id } = req.body;

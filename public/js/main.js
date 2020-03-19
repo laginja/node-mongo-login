@@ -285,7 +285,6 @@ const enableMarkerDrag = () => {
     // and calculate the offset between mouse and target's position
     // when starting to drag a marker object:
     map.addEventListener('dragstart', ev => {
-        console.log("drag started")
         let target = ev.target,
             pointer = ev.currentPointer;
         if (target instanceof H.map.DomMarker) {
@@ -299,11 +298,24 @@ const enableMarkerDrag = () => {
     // re-enable the default draggability of the underlying map
     // when dragging has completed
     map.addEventListener('dragend', ev => {
-        console.log("drag end")
         let target = ev.target;
         if (target instanceof H.map.DomMarker) {
-            let targetPosition = target.getGeometry();
-            console.log(target.getData().id + " " + targetPosition);
+            const coordinates = target.getGeometry();
+            const id = target.getData().id;
+
+            // API - endpoint to update marker 
+            const URL = '/markers/update';
+            const data = {
+                id,
+                coordinates
+            };
+
+            fetch(URL,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                })
             behavior.enable();
         }
     }, false);
@@ -375,7 +387,7 @@ const drawParking = edges => {
             }
         );
         vertice.draggable = true;
-        vertice.setData({ 
+        vertice.setData({
             'verticeIndex': index,
             'type': 'vertice'
         })
