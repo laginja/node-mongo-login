@@ -146,7 +146,10 @@ const setParkingData = element => {
             }
         );
         vertice.draggable = true;
-        vertice.setData({ 'verticeIndex': index })
+        vertice.setData({
+            'verticeIndex': index,
+            'parkingId': element._id
+        })
         verticeGroup.addObject(vertice);
     });
 
@@ -200,6 +203,7 @@ const setParkingData = element => {
 
     // event listener for vertice markers group to resize the geo polygon object if dragging over markers
     verticeGroup.addEventListener('drag', evt => {
+
         let pointer = evt.currentPointer,
             geoLineString = parking.getGeometry().getExterior(),
             geoPoint = map.screenToGeo(pointer.viewportX, pointer.viewportY);
@@ -215,6 +219,29 @@ const setParkingData = element => {
         // stop propagating the drag event, so the map doesn't move
         evt.stopPropagation();
     }, true);
+
+    verticeGroup.addEventListener('dragend', ev => {
+        const target = ev.target;
+        const id = target.getData().parkingId;
+        const verticeIndex = target.getData().verticeIndex;
+        const coordinates = target.getGeometry();
+
+        // API - endpoint to update marker 
+        const URL = '/parkings/update';
+        const data = {
+            id,
+            verticeIndex,
+            coordinates
+        };
+
+        fetch(URL,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+        behavior.enable();
+    });
 }
 
 //Step 1: initialize communication with the platform

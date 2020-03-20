@@ -36,7 +36,27 @@ router.post('/parking', ensureAuthenticated, (req, res) => {
     }
 });
 
-// Delete marker
+// Update parking
+router.post('/update', ensureAuthenticated, (req, res) => {
+    const { id, verticeIndex, coordinates } = req.body;
+
+    console.log(req.body)
+    if (!id || verticeIndex === undefined ||!coordinates) {
+        console.log("Parking data incorrect");
+    } else {
+        let parkingToUpdate;
+        // find parkingToUpdate
+        Parking.findOne({_id: id}).then(result => {
+            parkingToUpdate = result;
+            parkingToUpdate.edges[verticeIndex] = coordinates;
+            parkingToUpdate.save();
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+});
+
+// Delete parking
 router.delete('/parking', ensureAuthenticated, (req, res) => {
     const { id } = req.body;
 
