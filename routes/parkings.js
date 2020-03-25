@@ -40,7 +40,6 @@ router.post('/parking', ensureAuthenticated, (req, res) => {
 router.post('/update', ensureAuthenticated, (req, res) => {
     const { id, verticeIndex, coordinates } = req.body;
 
-    console.log(req.body)
     if (!id || verticeIndex === undefined ||!coordinates) {
         console.log("Parking data incorrect");
     } else {

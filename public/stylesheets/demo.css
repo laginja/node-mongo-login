@@ -56,7 +56,6 @@ html, body {
     margin: 0 auto;
 }
 
-
 /* Modal */
 /* The Modal (background) */
 .modal {
@@ -158,4 +157,10 @@ html, body {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+  }
+
+
+  /* Bubble */
+  .bubble {
+    width: 200px;
   }

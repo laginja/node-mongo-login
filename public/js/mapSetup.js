@@ -72,7 +72,8 @@ const setMarkerData = element => {
     marker.setData({
         "id": element._id,
         "type": element.type,
-        "price": element.price
+        "price": element.price,
+        "name": element.name
     })
     group.addObject(marker);
 }
@@ -282,41 +283,7 @@ map.addEventListener('tap', evt => {
 const addMarkerDropdown = () => {
     modal.style.display = "flex";
 
-    switch (objectToDraw) {
-        case 'T':
-            markerToDropLabel.innerHTML = "Traffic Light";
-            break;
-        case 'W':
-            markerToDropLabel.innerHTML = "Water Sensor";
-            break;
-        case 'G':
-            markerToDropLabel.innerHTML = "Air Sensor";
-            break;
-        case 'PS':
-            markerToDropLabel.innerHTML = "Parking Sensor";
-            break;
-        case 'PR':
-            markerToDropLabel.innerHTML = "Parking Ramp";
-            break;
-        case 'V':
-            markerToDropLabel.innerHTML = "Vending Machine";
-            break;
-        case 'TC':
-            markerToDropLabel.innerHTML = "Traffic Counter";
-            break;
-        case 'Wifi':
-            markerToDropLabel.innerHTML = "Wifi";
-            break;
-        case 'A':
-            markerToDropLabel.innerHTML = "Air Sensor";
-            break;
-        case 'B':
-            markerToDropLabel.innerHTML = "Smart Bench";
-            break;
-        case 'STC':
-            markerToDropLabel.innerHTML = "Smart Trash Can";
-            break;
-    }
+    markerToDropLabel.innerHTML = getMarkerDetails(objectToDraw).markerType;
 }
 
 // When the user clicks anywhere outside of the modal, close it
@@ -349,9 +316,17 @@ group.addEventListener('tap', evt => {
 
     if (evt.target.getData().type !== "vertice") {
         const bubbleCoords = evt.target.getData().type === "parking" ? map.screenToGeo(evt.currentPointer.viewportX, evt.currentPointer.viewportY) : evt.target.getGeometry();
+        let content =
+            `<div class="bubble">
+                <h5>${getMarkerDetails(evt.target.getData().type).markerType}</h5>
+                <hr>
+                <p>Name: ${evt.target.getData().name}</p>
+                <p>Price: ${evt.target.getData().price} kn</p>
+            </div>
+            `;
         bubble = new H.ui.InfoBubble(bubbleCoords, {
             // read custom data
-            content: evt.target.getData().type
+            content: content
         });
 
         ui.addBubble(bubble);

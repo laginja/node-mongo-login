@@ -87,42 +87,7 @@ const createMarkerIcon = type => {
     outerElement.style.mozUserSelect = 'none';
     outerElement.style.cursor = 'default';
 
-    switch (type) {
-        case 'T':
-            iconElement.className = "fas fa-traffic-light fa-2x";
-            break;
-        case 'W':
-            iconElement.className = "fas fa-water fa-2x";
-            break;
-        case 'G':
-            iconElement.className = "fas fa-tint fa-2x";
-            break;
-        case 'PS':
-            iconElement.className = "fas fa-car-crash fa-2x";
-            break;
-        case 'PR':
-            iconElement.className = "fas fa-window-minimize fa-2x";
-            break;
-        case 'V':
-            iconElement.className = "fas fa-cookie fa-2x";
-            break;
-        case 'TC':
-            iconElement.className = "fas fa-calculator fa-2x";
-            break;
-        case 'Wifi':
-            iconElement.className = "fas fa-wifi fa-2x";
-            break;
-        case 'A':
-            iconElement.className = "fas fa-wind fa-2x";
-            break;
-        case 'B':
-            iconElement.className = "fas fa-couch fa-2x";
-            break;
-        case 'STC':
-            iconElement.className = "fas fa-trash fa-2x";
-            break;
-
-    }
+    iconElement.className = getMarkerDetails(type).markerClass;
 
     // add negative margin to inner element
     // to move the anchor to center of the div
@@ -163,7 +128,8 @@ const saveMarker = markerData => {
             marker.setData({
                 "id": data._id,
                 "type": data.type,
-                "price": data.price
+                "price": data.price,
+                "name": data.name
             })
             group.addObject(marker);
             enableMarkerDrag();
@@ -278,6 +244,62 @@ const createParkingMarkerIcon = () => {
     });
 
     return domIcon;
+}
+
+const getMarkerDetails = type => {
+    let markerClass;
+    let markerType;
+
+    switch (type) {
+        case 'T':
+            markerClass = "fas fa-traffic-light fa-2x";
+            markerType = "Traffic Light";
+            break;
+        case 'W':
+            markerClass = "fas fa-water fa-2x";
+            markerType = "Water Sensor";
+            break;
+        case 'G':
+            markerClass = "fas fa-tint fa-2x";
+            markerType = "Gas Sensor";
+            break;
+        case 'PS':
+            markerClass = "fas fa-car-crash fa-2x";
+            markerType = "Parking Sensor";
+            break;
+        case 'PR':
+            markerClass = "fas fa-window-minimize fa-2x";
+            markerType = "Parking Ramp";
+            break;
+        case 'V':
+            markerClass = "fas fa-cookie fa-2x";
+            markerType = "Vending Machine";
+            break;
+        case 'TC':
+            markerClass = "fas fa-calculator fa-2x";
+            markerType = "Traffic Counter";
+            break;
+        case 'Wifi':
+            markerClass = "fas fa-wifi fa-2x";
+            markerType = "Wifi";
+            break;
+        case 'A':
+            markerClass = "fas fa-wind fa-2x";
+            markerType = "Air Sensor";
+            break;
+        case 'B':
+            markerClass = "fas fa-couch fa-2x";
+            markerType = "Smart Bench";
+            break;
+        case 'STC':
+            markerClass = "fas fa-trash fa-2x";
+            markerType = "Smart Trash Can";
+            break;
+    }
+
+    const marker = { markerClass, markerType };
+
+    return marker;
 }
 
 const enableMarkerDrag = () => {
@@ -479,7 +501,7 @@ const saveParking = parkingData => {
     const data = {
         price: 300,
         edges: edgeObjects,
-        type: "parking"
+        type: "Parking"
     };
 
     fetch(URL,
