@@ -9,7 +9,8 @@ router.use(express.json())
 
 // Find all markers
 router.get('/all', ensureAuthenticated, (req, res) => {
-    Marker.find({}).then(result => {
+    const owner = req.session.Auth.email;
+    Marker.find({owner: owner}).then(result => {
         res.json(result)
     }).catch(err => {
         console.log(err)
@@ -19,15 +20,17 @@ router.get('/all', ensureAuthenticated, (req, res) => {
 // Insert marker
 router.post('/marker', ensureAuthenticated, (req, res) => {
     const { type, name, price, coordinates } = req.body;
+    const owner = req.session.Auth.email;
 
-    if (!type || !name || !price || !coordinates) {
+    if (!type || !name || !price || !coordinates || !owner) {
         console.log("Marker data incorrect");
     } else {
         const newMarker = new Marker({
             type,
             name,
             price,
-            coordinates
+            coordinates,
+            owner
         });
         // Save a new marker
         newMarker.save().then(marker => {

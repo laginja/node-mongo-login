@@ -20,6 +20,10 @@ const ParkingSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true
+    },
+    owner: {
+        type: String,
+        required: true
     }
 });
 

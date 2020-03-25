@@ -22,6 +22,10 @@ const MarkerSchema = new mongoose.Schema({
             type: Number,
             required: true
         }
+    },
+    owner: {
+        type: String,
+        required: true
     }
 });
 

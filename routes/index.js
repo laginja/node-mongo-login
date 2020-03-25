@@ -6,9 +6,12 @@ const { ensureAuthenticated, ensureNotAuthenticated } = require('../auth/auth');
 router.get('/', ensureNotAuthenticated, (req, res) => res.render('welcome'));
 
 // Dashboard
-router.get('/dashboard', ensureAuthenticated, (req, res) =>
+router.get('/dashboard', ensureAuthenticated, (req, res) => {
+    req.session.Auth = req.user;
     res.render('dashboard', {
         user: req.user
-    }));
+    })
+}   
+);
 
 module.exports = router;

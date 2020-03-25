@@ -9,7 +9,8 @@ router.use(express.json())
 
 // Find all parkings
 router.get('/all', ensureAuthenticated, (req, res) => {
-    Parking.find({}).then(result => {
+    const owner = req.session.Auth.email;
+    Parking.find({owner: owner}).then(result => {
         res.json(result)
     }).catch(err => {
         console.log(err)
@@ -19,6 +20,7 @@ router.get('/all', ensureAuthenticated, (req, res) => {
 // Insert parking
 router.post('/parking', ensureAuthenticated, (req, res) => {
     const { price, edges, type } = req.body;
+    const owner = req.session.Auth.email;
 
     if (!price || !edges || !type) {
         console.log("Parking data incorrect");
@@ -26,7 +28,8 @@ router.post('/parking', ensureAuthenticated, (req, res) => {
         const newParking = new Parking({
             price,
             edges,
-            type
+            type,
+            owner
         });
         // Save a new parking
         newParking.save().then(parking => {
